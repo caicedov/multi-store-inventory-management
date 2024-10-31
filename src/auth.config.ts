@@ -1,36 +1,30 @@
 import bcrypt from 'bcryptjs'
 import type { NextAuthConfig } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-import { getUserByUsername } from './data/user'
+import { signInSchema } from './schemas/signInSchema'
+import { getUserByUsername } from './services/userService'
 
 export default {
   providers: [
     Credentials({
       credentials: {
-        username: { label: 'Usuario', type: 'text' },
-        password: { label: 'Contraseña', type: 'password' },
+        username: {},
+        password: {},
       },
       authorize: async (credentials) => {
-        if (!credentials?.username || !credentials?.password) return null
+        const { success, data } = signInSchema.safeParse(credentials)
+        if (!success) throw new Error('Invalid credentials')
 
-        const user = await getUserByUsername(credentials.username as string)
+        const user = await getUserByUsername(data.username)
 
-        if (!user) return null
+        if (!user || !user.password) throw new Error('Invalid credentials')
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
+        const passwordMatch = await bcrypt.compare(data.password, user.password)
 
-        if (!isPasswordValid) return null
+        if (!passwordMatch) throw new Error('Invalid credentials')
 
-        return {
-          id: user.id,
-          name: user.name,
-          username: user.username,
-          role: user.role
+        return user
 
-        }
       },
     }),
   ],
