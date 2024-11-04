@@ -9,7 +9,7 @@ export async function GET(
   context: RouteParams
 ) {
   try {
-    const { id } = context.params
+    const { id } = (await context.params)
     const searchParams = request.nextUrl.searchParams
     const skip = Number.parseInt(searchParams.get('skip') ?? '0')
     const take = Number.parseInt(searchParams.get('take') ?? '10')

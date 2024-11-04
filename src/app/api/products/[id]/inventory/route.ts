@@ -9,7 +9,7 @@ export async function GET(
   context: RouteParams
 ) {
   try {
-    const { id } = context.params
+    const { id } = (await context.params)
     const inventory = await productService.getProductInventory(id)
     return NextResponse.json(inventory)
   } catch (error) {

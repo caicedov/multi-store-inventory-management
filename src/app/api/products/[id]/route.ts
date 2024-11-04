@@ -10,7 +10,7 @@ export async function GET(
   context: RouteParams
 ) {
   try {
-    const { id } = context.params
+    const { id } = (await context.params)
     const product = await productService.getProductById(id)
 
     if (!product) {
