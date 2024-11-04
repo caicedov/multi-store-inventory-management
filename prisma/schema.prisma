@@ -19,11 +19,11 @@ model User {
   username String @unique
   password String
   role Role @default(SELLER)
-  active Boolean @default(true)
+  isActive Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([username])
+  inventoryMovesCreated InventoryMove[]   @relation("CreatedBy")
+  inventoryMovesApproved InventoryMove[]  @relation("ApprovedBy")
 }
 
 enum Role {
@@ -31,3 +31,143 @@ enum Role {
   ADMIN
   SELLER
 }
+
+model Category {
+  id String @id @default(cuid())
+  name String @unique
+  products Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Brand {
+  id String @id @default(cuid())
+  name String @unique
+  products Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id String @id @default(cuid())
+  name String
+  description String?
+  price Float
+  minimumStock    Int               @default(10)
+  status          ProductStatus     @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  categoryId String
+  category Category @relation(fields: [categoryId], references: [id])
+  brandId String?
+  brand Brand? @relation(fields: [brandId], references: [id])
+  storeInventory StoreInventory[]
+  inventoryMoves InventoryMove[]
+
+  @@index([brandId])
+  @@index([categoryId])
+}
+
+enum ProductStatus {
+  ACTIVE
+  DISCONTINUED
+  OUT_OF_STOCK
+}
+
+model Store {
+  id String @id @default(cuid())
+  name String
+  isActive        Boolean           @default(true)
+  storeInventory  StoreInventory[]
+  movesFrom       InventoryMove[]   @relation("FromStore")
+  movesTo         InventoryMove[]   @relation("ToStore")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model StoreInventory {
+  id          String    @id @default(uuid())
+  productId   String
+  storeId     String
+  quantity    Int       @default(0)
+  product     Product   @relation(fields: [productId], references: [id])
+  store       Store     @relation(fields: [storeId], references: [id])
+  lastCount   DateTime? // Last physical inventory count date
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([productId, storeId])
+  @@index([productId])
+  @@index([storeId])
+}
+
+model InventoryMove {
+  id          String        @id @default(uuid())
+  moveType    MoveType
+  status          MoveStatus        @default(PENDING)
+  quantity    Int
+  productId   String
+  fromStoreId     String?
+  toStoreId       String?
+  createdById     String
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  costBasis       Decimal?          @db.Decimal(10, 2)  // For losses/damages calculation
+  notes           String?
+  product     Product       @relation(fields: [productId], references: [id])
+  fromStore   Store?        @relation("FromStore", fields: [fromStoreId], references: [id])
+  toStore     Store?        @relation("ToStore", fields: [toStoreId], references: [id])
+  createdBy       User              @relation("CreatedBy", fields: [createdById], references: [id])
+  approvedBy      User?             @relation("ApprovedBy", fields: [approvedById], references: [id])
+  createdAt       DateTime          @default(now())
+  documents       Document[]        // Related documents (photos, reports, etc.)
+
+  @@index([productId])
+  @@index([fromStoreId])
+  @@index([toStoreId])
+  @@index([createdById])
+  @@index([approvedById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum MoveType {
+  INBOUND         // New stock arrival
+  OUTBOUND        // Sales or customer orders
+  TRANSFER        // Between stores
+  ADJUSTMENT      // Manual corrections
+  LOSS           // Theft or unexplained loss
+  DAMAGE         // Damaged goods
+  RETURN         // Customer returns
+  EXPIRED        // Expired products
+  COUNT          // Inventory count adjustments
+}
+
+enum MoveStatus {
+  PENDING     // Waiting for approval
+  APPROVED    // Movement approved and executed
+  REJECTED    // Movement rejected
+  CANCELLED   // Movement cancelled
+}
+
+model Document {
+  id              String        @id @default(uuid())
+  moveId          String
+  type            DocumentType
+  url             String
+  filename        String
+  move            InventoryMove @relation(fields: [moveId], references: [id])
+  uploadedAt      DateTime      @default(now())
+
+  @@index([moveId])
+}
+
+enum DocumentType {
+  PHOTO
+  INVOICE
+  REPORT
+  OTHER
+}
+
+// TODO: Continuar con el modelo de datos
