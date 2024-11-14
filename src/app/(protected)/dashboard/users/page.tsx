@@ -1,7 +1,24 @@
 'use client'
+import { createUserAction } from '@/actions/users/create'
 import UserTable from '@/components/dashboard/users/UsersTable'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -17,14 +34,18 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useUsers } from '@/hooks/useUsers'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Role } from '@prisma/client'
-import { ChevronDown, Download, Search } from 'lucide-react'
+import { Download, Plus, Search } from 'lucide-react'
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
 
 export default function UsersPage() {
   const [search, setSearch] = useState<string>('')
   const [role, setRole] = useState<Role | undefined>(undefined)
   const [page, setPage] = useState<number>(1)
+  const [openModal, setOpenModal] = useState<boolean>(false)
   const pageSize = 10
   const { users, loading, total, hasMore } = useUsers({
     search,
@@ -44,6 +65,32 @@ export default function UsersPage() {
   }
 
   const totalPages = Math.ceil(total / pageSize)
+
+  const formSchema = z.object({
+    name: z.string().min(3, { message: 'Name must be at least 3 characters' }),
+    username: z
+      .string()
+      .min(3, { message: 'Username must be at least 3 characters' }),
+    password: z
+      .string()
+      .min(6, { message: 'Password must be at least 6 characters' }),
+  })
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      username: '',
+      password: '',
+    },
+  })
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Handle form submission
+    createUserAction(values)
+    setOpenModal(false)
+    form.reset()
+  }
 
   return (
     <div className='container mx-auto p-4 space-y-6'>
@@ -88,10 +135,79 @@ export default function UsersPage() {
                   <p>Download all</p>
                 </TooltipContent>
               </Tooltip>
-              <Button>
-                Add product
-                <ChevronDown className='h-4 w-4 ml-2' />
-              </Button>
+              <Dialog open={openModal} onOpenChange={setOpenModal}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className='mr-2 h-4 w-4' />
+                    Add User
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className='sm:max-w-[500px]'>
+                  <DialogHeader>
+                    <DialogTitle>New User</DialogTitle>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className='space-y-4'
+                    >
+                      <FormField
+                        control={form.control}
+                        name='name'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder='Enter full name' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name='username'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input placeholder='Enter username' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name='password'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input
+                                type={'password'}
+                                placeholder='Enter password'
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DialogFooter className='gap-2 sm:gap-0'>
+                        <Button
+                          type='button'
+                          variant={'outline'}
+                          onClick={() => setOpenModal(false)}
+                        >
+                          Discard
+                        </Button>
+                        <Button type='submit'>Add User</Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
