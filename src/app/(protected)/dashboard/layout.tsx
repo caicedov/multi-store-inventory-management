@@ -1,4 +1,4 @@
-import DashboardWrapper from '@/app/(protected)/dashboard/_components/DashboardWrapper'
+import DashboardWrapper from '@/components/dashboard/DashboardWrapper'
 
 interface DashboardLayoutProps {
   children: React.ReactNode

@@ -1,3 +1,4 @@
+import { NavItem } from '@/components/dashboard/NavItem'
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +13,6 @@ import {
   Users2,
 } from 'lucide-react'
 import Link from 'next/link'
-import { NavItem } from './NavItem'
 
 const DesktopNav = () => {
   return (
@@ -28,17 +28,17 @@ const DesktopNav = () => {
         <NavItem href='/dashboard' label='Dashboard'>
           <Home className='w-5 h-5' />
         </NavItem>
-        <NavItem href='/sales' label='Sales'>
+        <NavItem href='/dashboard/sales' label='Sales'>
           <ShoppingCart className='h-5 w-5' />
         </NavItem>
-        <NavItem href='/products' label='Products'>
+        <NavItem href='/dashboard/products' label='Products'>
           <Package className='w-5 h-5' />
         </NavItem>
-        <NavItem href='/users' label='Users'>
+        <NavItem href='/dashboard/users' label='Users'>
           <Users2 className='h-5 w-5' />
         </NavItem>
 
-        <NavItem href='/analytics' label='Analytics'>
+        <NavItem href='/dashboard/analytics' label='Analytics'>
           <LineChart className='h-5 w-5' />
         </NavItem>
       </nav>
