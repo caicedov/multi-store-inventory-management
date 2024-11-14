@@ -1,8 +1,8 @@
-import bcrypt from 'bcryptjs'
 import type { NextAuthConfig } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-import { signInSchema } from './schemas/signInSchema'
-import { getUserByUsername } from './services/userService'
+import { signInSchema } from '@/schemas/signInSchema'
+import userService from '@/services/userService'
+import { comparePassword } from '@/lib/utils'
 
 export default {
   providers: [
@@ -15,11 +15,11 @@ export default {
         const { success, data } = signInSchema.safeParse(credentials)
         if (!success) throw new Error('Invalid credentials')
 
-        const user = await getUserByUsername(data.username)
+        const user = await userService.getUserByUsername(data.username)
 
         if (!user || !user.password) throw new Error('Invalid credentials')
-
-        const passwordMatch = await bcrypt.compare(data.password, user.password)
+        
+        const passwordMatch = await comparePassword(data.password, user.password)
 
         if (!passwordMatch) throw new Error('Invalid credentials')
 

@@ -3,8 +3,8 @@ import NextAuth from 'next-auth'
 
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import type { Role } from '@prisma/client'
-import db from './lib/db'
-import { getUserById } from './services/userService'
+import db from '@/lib/db'
+import userService from '@/services/userService'
 
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -18,18 +18,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     // Callback que se ejecuta al intentar iniciar sesión
     async signIn({ user }) {
-      const existingUser = await getUserById(user.id as string)
+      const existingUser = await userService.getUserById(user.id as string)
 
       if (!existingUser) return false
 
-      if (!existingUser?.active) return false
+      if (!existingUser?.isActive) return false
 
       return true
     },
     // Callback para modificar el JWT antes de ser emitidos
     async jwt({ token }) {
       if (!token.sub) return token
-      const existingUser = await getUserById(token.sub)
+      const existingUser = await userService.getUserById(token.sub)
       if (!existingUser) return token
 
       token.idUser = existingUser.id

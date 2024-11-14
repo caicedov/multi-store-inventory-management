@@ -3,7 +3,7 @@
 import { signIn } from '@/auth'
 import { DEFAULT_LOGIN_REDIRECT } from '@/routes'
 import { signInSchema } from '@/schemas/signInSchema'
-import { getUserByUsername } from '@/services/userService'
+import userService from '@/services/userService'
 import { AuthError } from 'next-auth'
 import type { z } from 'zod'
 
@@ -16,12 +16,12 @@ export const login = async (
   if (!validatedFields.success) return { error: 'Invalid fields!' }
 
   const { username, password } = validatedFields.data
-  const existingUser = await getUserByUsername(username)
+  const existingUser = await userService.getUserByUsername(username)
 
   if (!existingUser?.username || !existingUser?.password)
     return { error: 'Username does not exist!' }
 
-  if (!existingUser.active) return { error: 'User is not active!' }
+  if (!existingUser.isActive) return { error: 'User is not active!' }
 
   try {
     await signIn('credentials', {

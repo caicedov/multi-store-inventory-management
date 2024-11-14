@@ -1,5 +1,5 @@
 import db from "@/lib/db"
-import type { ProductCreateInput, ProductUpdateInput } from "@/types/product";
+import type { ProductCreateInput, ProductFilterParams, ProductUpdateInput } from "@/types/product";
 import { type Prisma, type Product, ProductStatus } from "@prisma/client";
 
 export class ProductService {
@@ -22,14 +22,7 @@ export class ProductService {
     })
   }
 
-  async getProducts(params: {
-    skip?: number
-    take?: number
-    search?: string
-    brandId?: string
-    categoryId?: string
-    status?: ProductStatus
-  }) {
+  async getProducts(params: ProductFilterParams): Promise<{ products: Product[]; total: number; hasMore: boolean }> {
     const {
       skip = 0,
       take = 10,
@@ -83,7 +76,7 @@ export class ProductService {
   }
 
   // Get a single product by ID
-  async getProductById(id: string) {
+  async getProductById(id: string): Promise<Product | null> {
     return db.product.findUnique({
       where: { id },
       include: {
